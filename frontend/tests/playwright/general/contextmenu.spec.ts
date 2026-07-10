@@ -9,7 +9,7 @@ test("info from listing - archive item", async({ page, checkForErrors }) => {
     await expect(page.locator('.selected-count-header')).toHaveText('1');
     await expect(page.locator('button[aria-label="Info"]')).toBeVisible();
     await expect(page.locator('button[aria-label="Download"]')).toBeVisible();
-    await expect(page.locator('button[aria-label="Share"]')).toBeVisible();
+    await expect(page.locator('#context-menu button[aria-label="Share"]')).toBeVisible();
     await expect(page.locator('button[aria-label="Delete"]')).toBeVisible();
     await expect(page.locator('button[aria-label="Rename"]')).toBeVisible();
     await expect(page.locator('button[aria-label="Move file"]')).toBeVisible();
@@ -28,7 +28,7 @@ test("info from listing - regular item", async({ page, checkForErrors }) => {
     await expect(page.locator('.selected-count-header')).toHaveText('1');
     await expect(page.locator('button[aria-label="Info"]')).toBeVisible();
     await expect(page.locator('button[aria-label="Download"]')).toBeVisible();
-    await expect(page.locator('button[aria-label="Share"]')).toBeVisible();
+    await expect(page.locator('#context-menu button[aria-label="Share"]')).toBeVisible();
     await expect(page.locator('button[aria-label="Delete"]')).toBeVisible();
     await expect(page.locator('button[aria-label="Rename"]')).toBeVisible();
     await expect(page.locator('button[aria-label="Move file"]')).toBeVisible();
@@ -53,7 +53,7 @@ test("context menu is shown on sizeAnalyzer tool", async({ page, checkForErrors 
     await expect(page.locator('button[aria-label="Open parent folder"]')).toBeVisible();
     await expect(page.locator('button[aria-label="Go to item"]')).toBeVisible();
     await expect(page.locator('button[aria-label="Download"]')).toBeHidden();
-    await expect(page.locator('button[aria-label="Share"]')).toBeHidden();
+    await expect(page.locator('#context-menu button[aria-label="Share"]')).toBeHidden();
     await expect(page.locator('button[aria-label="Delete"]')).toBeHidden();
     await expect(page.locator('button[aria-label="Rename"]')).toBeHidden();
     await expect(page.locator('button[aria-label="Move file"]')).toBeHidden();
@@ -78,7 +78,7 @@ test("context menu is shown on duplicateFinder tool", async({ page, checkForErro
     await expect(page.locator('button[aria-label="Open parent folder"]')).toBeVisible();
     await expect(page.locator('button[aria-label="Go to item"]')).toBeVisible();
     await expect(page.locator('button[aria-label="Download"]')).toBeHidden();
-    await expect(page.locator('button[aria-label="Share"]')).toBeHidden();
+    await expect(page.locator('#context-menu button[aria-label="Share"]')).toBeHidden();
     await expect(page.locator('button[aria-label="Delete"]')).toBeHidden();
     await expect(page.locator('button[aria-label="Rename"]')).toBeHidden();
     await expect(page.locator('button[aria-label="Move file"]')).toBeHidden();
@@ -118,7 +118,7 @@ test("context menu is shown on quick jump", async({ page, checkForErrors }) => {
     await expect(page.locator('button[aria-label="Open parent folder"]')).toBeVisible();
     await expect(page.locator('button[aria-label="Go to item"]')).toBeVisible();
     await expect(page.locator('button[aria-label="Download"]')).toBeHidden();
-    await expect(page.locator('button[aria-label="Share"]')).toBeHidden();
+    await expect(page.locator('#context-menu button[aria-label="Share"]')).toBeHidden();
     await expect(page.locator('button[aria-label="Delete"]')).toBeHidden();
     await expect(page.locator('button[aria-label="Rename"]')).toBeHidden();
     await expect(page.locator('button[aria-label="Move file"]')).toBeHidden();

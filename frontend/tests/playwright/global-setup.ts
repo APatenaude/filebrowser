@@ -33,7 +33,7 @@ async function globalSetup() {
     await page.locator('a[aria-label="myfolder"]').click({ button: "right" });
     await page.locator('.selected-count-header').waitFor({ state: 'visible' });
     await expect(page.locator('.selected-count-header')).toHaveText('1');
-    await page.locator('button[aria-label="Share"]').click();
+    await page.locator('#context-menu button[aria-label="Share"]').click();
   });
   await page.locator('button[aria-label="Share-Confirm"]').click();
   await expect(page.locator("div[aria-label='share-prompt'] .card-content table tbody tr:not(:has(th))")).toHaveCount(1);
@@ -54,7 +54,7 @@ async function globalSetup() {
     await page.locator('a[aria-label="1file1.txt"]').click({ button: "right" });
     await page.locator('.selected-count-header').waitFor({ state: 'visible' });
     await expect(page.locator('.selected-count-header')).toHaveText('1');
-    await page.locator('button[aria-label="Share"]').click();
+    await page.locator('#context-menu button[aria-label="Share"]').click();
   });
   await page.locator('button[aria-label="Share-Confirm"]').click();
   await expect(page.locator("div[aria-label='share-prompt'] .card-content table tbody tr:not(:has(th))")).toHaveCount(1);

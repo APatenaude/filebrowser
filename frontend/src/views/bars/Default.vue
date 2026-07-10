@@ -7,7 +7,7 @@
       :disabled="isDisabledMultiAction"
       @action="multiAction"
     />
-    <div class="search-bar-container" :class="{ disabled: isDisabled }" 
+    <div class="search-bar-container" :class="{ disabled: isDisabled }"
          v-if="showSearch && !isSearchActive" @click="openSearch" >
       <i class="material-symbols">search</i>
       <input 

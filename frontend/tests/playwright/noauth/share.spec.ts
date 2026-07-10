@@ -23,11 +23,11 @@ test("breadcrumbs navigation checks for shares", async ({ page, checkForErrors }
   checkForErrors(0,1); // redirect errors are expected and 404 image preview for blank file
 });
 
-test("root share path is valid", async ({ page, checkForErrors, openContextMenu }) => {
+test("root share path is valid", async ({ page, checkForErrors, waitForFileActions }) => {
   await page.goto("/files/exclude/");
   await expect(page).toHaveTitle("Graham's Filebrowser - Files - playwright-files");
-  await openContextMenu();
-  await page.locator('button[aria-label="Share"]').click();
+  await waitForFileActions();
+  await page.locator('[data-testid="sidebar-file-action-share"]').click();
   await expect(page.locator('div[aria-label="share-path"]')).toHaveText('Path: /');
   checkForErrors();
 });

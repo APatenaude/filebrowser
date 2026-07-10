@@ -64,8 +64,8 @@ test("2x copy from listing to new folder", async({ page, checkForErrors }) => {
   // create new directory
   // Ensure .listing-items is visible
   await page.locator('.listing-items').click({ button: "right" });
-  await page.locator('button[aria-label="New folder"]').waitFor({ state: 'visible' });
-  await page.locator('button[aria-label="New folder"]').click();
+  await page.locator('#context-menu button[aria-label="New folder"]').waitFor({ state: 'visible' });
+  await page.locator('#context-menu button[aria-label="New folder"]').click();
   await page.locator('input[aria-label="New Folder Name"]').waitFor({ state: 'visible' });
   await page.locator('input[aria-label="New Folder Name"]').fill('newfolder');
   await page.locator('button[aria-label="Create"]').click();
@@ -141,11 +141,11 @@ test("rename file", async({ page, checkForErrors }) => {
   checkForErrors();
 })
 
-test("create a file with the same name as a directory", async({ page, checkForErrors, openContextMenu }) => {
+test("create a file with the same name as a directory", async({ page, checkForErrors, waitForFileActions }) => {
   await page.goto("/files/");
   await expect(page).toHaveTitle("Graham's Filebrowser - Files - playwright-files");
-  await openContextMenu();
-  await page.locator('button[aria-label="New file"]').click();
+  await waitForFileActions();
+  await page.locator('[data-testid="sidebar-file-action-new-file"]').click();
   await page.locator('button[aria-label="Create"]').click();
   await page.locator('input[aria-label="FileName Field"]').waitFor({ state: 'visible' });
   await page.locator('input[aria-label="FileName Field"]').fill('mytest');
@@ -158,8 +158,8 @@ test("create a file with the same name as a directory", async({ page, checkForEr
   await expect(page.locator('.card-content')).toContainText('/mytest');
   await page.locator('button[aria-label="Confirm-Delete"]').click();
   await checkForNotification(page, "Deleted successfully!");
-  await openContextMenu();
-  await page.locator('button[aria-label="New folder"]').click();
+  await waitForFileActions();
+  await page.locator('[data-testid="sidebar-file-action-new-folder"]').click();
   await page.locator('input[aria-label="New Folder Name"]').waitFor({ state: 'visible' });
   await page.locator('input[aria-label="New Folder Name"]').fill('mytest');
   await page.locator('button[aria-label="Create"]').click();

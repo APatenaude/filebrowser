@@ -46,24 +46,15 @@
         </div>
       </div>
       <hr v-if="showDivider" class="divider">
-      <action
-        v-if="showCreateFileActions"
-        icon="create_new_folder"
-        :label="$t('files.newFolder')"
-        @action="showNewDirPrompt"
-      />
-      <action
-        v-if="showCreateFileActions"
-        icon="note_add"
-        :label="$t('files.newFile')"
-        @action="showPrompt('newFile')"
-      />
-      <action
-        v-if="showCreateFileActions"
-        icon="file_upload"
-        :label="$t('general.upload')"
-        @action="showUploadPrompt"
-      />
+      <template v-if="showCreateFileActions">
+        <action
+          v-for="item in createActions"
+          :key="item.key"
+          :icon="item.icon"
+          :label="item.label"
+          @action="item.action"
+        />
+      </template>
       <action
         v-if="showArchive"
         icon="archive"
@@ -207,6 +198,7 @@ import Action from "@/components/Action.vue";
 import { notify } from "@/notify";
 import { getters, mutations, state } from "@/store";
 import { url } from "@/utils";
+import { buildCreateActions } from "@/utils/fileActions";
 import buttons from "@/utils/buttons";
 import { copyToClipboard } from "@/utils/clipboard";
 import { globalVars } from "@/utils/constants.js";
@@ -292,6 +284,9 @@ export default {
         return !!getters.permissions().create;
       }
       return getters.isAdmin() || !!state.user?.permissions?.create;
+    },
+    createActions() {
+      return buildCreateActions(this.$t, { item: this.firstSelected });
     },
     /** New folder / new file / upload — requires permissions.create only (not admin alone). */
     showCreateFileActions() {
@@ -801,25 +796,6 @@ export default {
       await copyToClipboard(path);
       mutations.closeHovers();
     },
-    showNewDirPrompt() {
-      mutations.closeHovers();
-      // If the context menu was triggered on a directory, pass its path as base
-      const selectedItem = this.firstSelected;
-      let base = null;
-      if (selectedItem?.isDir) {
-        // Pass both path and source
-        base = {
-          path: selectedItem.path,
-          source: selectedItem.source,
-        };
-      }
-      mutations.showPrompt({
-        name: "newDir",
-        props: {
-          base: base,
-        },
-      });
-    },
     showArchivePrompt() {
       mutations.closeTopPrompt();
       const items = this.providedItems.map(item => ({
@@ -909,23 +885,6 @@ export default {
         buttons.done(button);
       }
       mutations.closeHovers();
-    },
-    showUploadPrompt() {
-      mutations.closeHovers();
-      let targetPath = state.req.path;
-      let targetSource = state.req.source;
-      const selectedItem = this.firstSelected;
-      if (selectedItem?.isDir) {
-        targetPath = selectedItem.path;
-        targetSource = selectedItem.source;
-      }
-      mutations.showPrompt({
-        name: "upload",
-        props: {
-          targetPath: targetPath,
-          targetSource: targetSource,
-        },
-      });
     },
     openParentFolder() {
       const item = this.firstSelected;

@@ -1,6 +1,6 @@
 <template>
   <div class="card headline-card">
-    <div v-if="isDataLoaded && shouldShowLogin" class="card-wrapper user-card" :class="{ 'extra-padding': !disableQuickToggles }">
+    <div v-if="isDataLoaded && shouldShowLogin" class="card-wrapper user-card">
       <div v-if="settingsAllowed" class="inner-card user-card__profile">
         <a href="/settings#profile-main" class="person-button action button"
           @click.prevent="navigateTo('/settings', '#profile-main')"
@@ -31,32 +31,18 @@
       </div>
     </div>
 
-    <div v-if="!disableQuickToggles" class="card-wrapper" @mouseleave="hideTooltip">
-      <div class="quick-toggles" :class="{ 'extra-padding': hasCreateOptions }">
-        <div class="clickable" :class="{ active: user?.singleClick }" @click="toggleClick"
-          @mouseenter="showTooltip($event, $t('index.toggleClick'))" @mouseleave="hideTooltip" v-if="!isInvalidShare">
-          <i class="material-symbols">ads_click</i>
-        </div>
-        <div aria-label="Toggle Theme" v-if="darkModeTogglePossible" class="clickable"
-          :class="{ active: user?.darkMode }" @click="toggleDarkMode"
-          @mouseenter="showTooltip($event, $t('index.toggleDark'))" @mouseleave="hideTooltip">
-          <i class="material-symbols">dark_mode</i>
-        </div>
-        <div class="clickable" :class="{ active: isStickySidebar }" @click="toggleSticky"
-          @mouseenter="showTooltip($event, $t('index.toggleSticky'))" @mouseleave="hideTooltip" v-if="!isMobile">
-          <i class="material-symbols">push_pin</i>
-        </div>
-      </div>
-    </div>
-
     <!-- Sidebar file actions -->
     <transition v-if="shareInfo.shareType !== 'upload'" name="expand" @before-enter="beforeEnter" @enter="enter"
       @leave="leave">
-      <div v-if="!hideSidebarFileActions && isListingView" class="card-wrapper">
-        <button type="button" @click="openContextMenu" aria-label="File-Actions" data-testid="file-actions-button" class="action file-actions">
-          <i class="material-symbols">add</i>
-          {{ $t("sidebar.fileActions") }}
-        </button>
+      <div v-if="!hideSidebarFileActions && isListingView" class="card-wrapper file-actions-inline" data-testid="sidebar-file-actions">
+        <action
+          v-for="item in fileActionItems"
+          :key="item.key"
+          :icon="item.icon"
+          :label="item.label"
+          :data-testid="`sidebar-file-action-${item.key}`"
+          @action="item.action"
+        />
       </div>
     </transition>
     <!-- Hidden marker for tests to detect when file actions should be available -->
@@ -76,12 +62,15 @@ import * as auth from "@/utils/auth";
 import { globalVars } from "@/utils/constants";
 import { state, getters, mutations } from "@/store";
 import SidebarLinks from "./Links.vue";
+import Action from "@/components/Action.vue";
 import { url } from "@/utils";
+import { buildFileActionItems, shouldHideFileActions } from "@/utils/fileActions";
 
 export default {
   name: "SidebarGeneral",
   components: {
     SidebarLinks,
+    Action,
   },
   data() {
     return {};
@@ -96,22 +85,15 @@ export default {
       // For regular files, user should be loaded
       return state.user !== null && state.user !== undefined;
     },
-    hasCreateOptions() {
-      if (getters.isShare()) {
-        return state.shareInfo?.allowCreate === true
-      }
-      return state.user?.permissions?.create || state.user?.permissions?.share || state.user?.permissions?.admin;
-    },
     shareInfo: () => state.shareInfo,
-    disableQuickToggles: () => state.user?.disableQuickToggles,
-    hideSidebarFileActions() {
-      return state.user?.hideSidebarFileActions || getters.isInvalidShare() || !this.hasCreateOptions;
+    hideSidebarFileActions: () => shouldHideFileActions(),
+    fileActionItems() {
+      return buildFileActionItems(this.$t);
     },
     settingsAllowed: () => !state.user?.disableSettings,
     isSettings: () => getters.isSettings(),
     isStickySidebar: () => getters.isStickySidebar(),
     isMobile: () => getters.isMobile(),
-    isInvalidShare: () => getters.isInvalidShare(),
     isListingView: () => getters.currentView() === "listingView",
     user: () => (state.user || {username: 'anonymous'}),
     isShare: () => getters.isShare(),
@@ -119,7 +101,6 @@ export default {
     canLogout: () => !globalVars.noAuth && state.user?.username !== 'anonymous',
     route: () => state.route,
     realtimeActive: () => state.realtimeActive,
-    darkModeTogglePossible: () => state.shareInfo?.enforceDarkLightMode !== "dark" && state.shareInfo?.enforceDarkLightMode !== "light",
     shouldShowLogin() {
       if (getters.isShare()) {
         // Don't show login until shareInfo is fully loaded
@@ -141,31 +122,8 @@ export default {
     },
   },
   methods: {
-    openContextMenu() {
-      mutations.resetSelected();
-      mutations.showPrompt({
-        name: "ContextMenu",
-        props: {
-          showCentered: true,
-          createOnly: true,
-        },
-      });
-    },
     checkLogin() {
       return getters.isLoggedIn() && !getters.routePath().startsWith("/share");
-    },
-    toggleClick() {
-      void mutations.updateCurrentUser({ singleClick: !state.user.singleClick });
-    },
-    toggleDarkMode() {
-      mutations.toggleDarkMode();
-    },
-    toggleSticky() {
-      // keep sidebar open if disabling sticky sidebar
-      if (!state.showSidebar && state.user.stickySidebar) {
-        mutations.toggleSidebar();
-      }
-      void mutations.updateCurrentUser({ stickySidebar: !state.user.stickySidebar });
     },
     navigateTo(path,hash) {
       mutations.setPreviousHistoryItem({
@@ -262,19 +220,6 @@ export default {
   min-width: 0;
 }
 
-.quick-toggles {
-  display: flex;
-  justify-content: space-evenly;
-  width: 100%;
-  color: var(--textPrimary);
-}
-
-.quick-toggles button {
-  border-radius: 10em;
-  cursor: pointer;
-  flex: none;
-}
-
 .sources {
   display: flex;
   justify-content: center;
@@ -291,28 +236,9 @@ export default {
   width: 100%;
 }
 
-.quick-toggles div {
-  border-radius: 10em;
-  background-color: var(--surfaceSecondary);
-  transform: translateZ(0);
-}
-
-.quick-toggles div i {
-  font-size: 2em;
-  padding: 0.25em;
-  border-radius: 10em;
-  cursor: pointer;
-}
-
 button.action {
   border-radius: 0.5em;
   transform: translateZ(0);
-}
-
-.quick-toggles .active {
-  background-color: var(--primaryColor) !important;
-  border-radius: 10em;
-  color: white;
 }
 
 .inner-card {
@@ -357,19 +283,23 @@ button.action {
   white-space: nowrap;
 }
 
-.file-actions {
+.file-actions-inline {
+  align-items: stretch !important;
+  gap: 0.25em;
+  margin-top: 0.5em;
+}
+
+.file-actions-inline .action {
   padding: 0.25em !important;
-  margin-top: 0.5em !important;
   display: flex !important;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 0.5em;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.file-actions i {
-  padding: 0em !important;
-}
-
-.extra-padding {
-  padding-bottom: 0.5em !important;
+.file-actions-inline .action i {
+  padding: 0 !important;
 }
 </style>

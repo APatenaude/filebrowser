@@ -42,24 +42,10 @@ export async function closeContextMenuIfOpen(page: Page): Promise<void> {
   }
 }
 
-async function waitForContextMenuReady(page: Page, contextMenu: Locator): Promise<void> {
-  await contextMenu.waitFor({ state: "visible", timeout: 5000 });
-  await page.waitForFunction(() => {
-    const menus = document.querySelectorAll("#context-menu");
-    const menu = menus[menus.length - 1];
-    if (!(menu instanceof HTMLElement)) {
-      return false;
-    }
-    const rect = menu.getBoundingClientRect();
-    return rect.height > 40 && rect.width > 40 && menu.style.opacity !== "0";
-  }, { timeout: 5000 });
-}
-
 /**
- * Standalone helper function to open the context menu (File-Actions button)
- * Can be used in both test fixtures and global setup
+ * Waits for the sidebar's inline file-actions buttons to be visible.
  */
-export async function openContextMenuHelper(
+export async function waitForFileActionsReady(
   page: Page,
   options?: { timeout?: number },
 ): Promise<void> {
@@ -87,24 +73,20 @@ export async function openContextMenuHelper(
       );
     }
 
-    const fileActionsButton = page.locator('[data-testid="file-actions-button"]');
-    await fileActionsButton.waitFor({ state: "visible", timeout: 5000 });
-    await fileActionsButton.click();
+    const sidebarFileActions = page.locator('[data-testid="sidebar-file-actions"]');
+    await sidebarFileActions.waitFor({ state: "visible", timeout: 5000 });
   }).toPass({ timeout, intervals: PLAYWRIGHT_RETRY_INTERVALS });
 }
 
 /**
- * Opens the sidebar File-Actions menu and clicks Share once the context menu is ready.
+ * Waits for the sidebar file-actions to be ready and clicks Share directly.
  */
 export async function openShareFromFileActions(page: Page): Promise<void> {
   await closeSharePromptIfOpen(page);
   await closeContextMenuIfOpen(page);
-  await openContextMenuHelper(page);
+  await waitForFileActionsReady(page);
 
-  const contextMenu = page.locator("#context-menu").last();
-  await waitForContextMenuReady(page, contextMenu);
-
-  const shareButton = contextMenu.locator('button[aria-label="Share"]');
+  const shareButton = page.locator('[data-testid="sidebar-file-action-share"]');
   await shareButton.waitFor({ state: "visible", timeout: 5000 });
   await shareButton.scrollIntoViewIfNeeded();
 
@@ -257,7 +239,7 @@ export async function createShareAndGetHash(
 
 export const test = base.extend<{
   checkForErrors: (expectedConsoleErrors?: number, expectedApiErrors?: number) => void;
-  openContextMenu: () => Promise<void>;
+  waitForFileActions: () => Promise<void>;
   theme: 'light' | 'dark';
   checkForNotification: (message: string | RegExp) => Promise<import('@playwright/test').Locator>;
 }>({
@@ -265,9 +247,9 @@ export const test = base.extend<{
     const { checkForErrors } = setupErrorTracking(page);
     await use(checkForErrors);
   },
-  openContextMenu: async ({ page }, use) => {
+  waitForFileActions: async ({ page }, use) => {
     await use(async () => {
-      await openContextMenuHelper(page);
+      await waitForFileActionsReady(page);
     });
   },
   theme: async ({}, use, testInfo) => {
