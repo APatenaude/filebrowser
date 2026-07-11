@@ -43,7 +43,7 @@ export default {
 <style>
 .file-actions-fab {
   position: fixed;
-  right: calc(1em + var(--safe-area-right));
+  right: calc(1em + var(--safe-area-right, 0px));
   bottom: 3.5em;
   z-index: 3;
   width: 3.5em;
@@ -65,6 +65,6 @@ export default {
 
 body.rtl .file-actions-fab {
   right: auto;
-  left: calc(1em + var(--safe-area-left));
+  left: calc(1em + var(--safe-area-left, 0px));
 }
 </style>

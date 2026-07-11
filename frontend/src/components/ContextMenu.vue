@@ -902,7 +902,7 @@ export default {
 
 #context-menu.centered {
   /* center within the physical screen, not the iOS-shifted viewport */
-  top: calc(50% + var(--safe-area-top) / 2) !important;
+  top: calc(50% + var(--safe-area-top, 0px) / 2) !important;
   left: 50% !important;
   -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
