@@ -1,12 +1,18 @@
 <template>
-  <div class="epub-container">
+  <div class="epub-container" @mousemove="revealControls">
     <div v-if="!isReady" class="loading-indicator">
       <p>{{ $t("general.loading", { suffix: "..." }) }}</p>
     </div>
 
     <div id="viewer" :class="{ ready: isReady }"></div>
 
-    <div v-if="isReady" class="navigation">
+    <div
+      v-if="isReady"
+      class="navigation"
+      :class="{ 'nav-hidden': !controlsVisible }"
+      @pointerenter="revealControls"
+      @pointerdown="revealControls"
+    >
       <button type="button" @click="prevPage" class="nav-button">&lt;</button> <!-- eslint-disable-line @intlify/vue-i18n/no-raw-text -->
       <button type="button" @click="nextPage" class="nav-button">&gt;</button> <!-- eslint-disable-line @intlify/vue-i18n/no-raw-text -->
     </div>
@@ -61,6 +67,8 @@ export default defineComponent({
       unwatchDarkMode: null as (() => void) | null,
       onRelocatedHandler: null as ((loc: unknown) => void) | null,
       onWindowHashChangeHandler: null as (() => void) | null,
+      controlsVisible: true, // page buttons fade out when idle
+      idleTimer: null as number | null,
     };
   },
   async mounted() {
@@ -100,6 +108,13 @@ export default defineComponent({
         flow: "paginated", // Standard book-like pagination
       });
 
+      // taps land inside the chapter iframe, whose events don't bubble out; hook each rendered doc to reveal the buttons
+      this.rendition.hooks.content.register((contents: { document: Document }) => {
+        contents.document.addEventListener("touchstart", this.revealControls, { passive: true });
+        contents.document.addEventListener("mousemove", this.revealControls, { passive: true });
+        contents.document.addEventListener("click", this.revealControls);
+      });
+
       // 4. Display: restore from `#epubcfi=...` if present, else first linear chapter
       const initialCfi = parseEpubCfiFromHash();
       try {
@@ -119,6 +134,7 @@ export default defineComponent({
       });
 
       this.onRelocatedHandler = (loc: unknown) => {
+        this.revealControls(); // page turned — show the buttons, then let them fade
         const start = (loc as { start?: { cfi?: unknown } })?.start;
         const cfi = cfiToString(start?.cfi);
         if (!cfi) return;
@@ -142,6 +158,7 @@ export default defineComponent({
 
       // Set flags to show the book and trigger animations
       this.isReady = true;
+      this.revealControls(); // initial display already fired relocated before the handler was attached
       setTimeout(() => {
         this.floatIn = true;
       }, 100); // slight delay to allow rendering
@@ -153,6 +170,10 @@ export default defineComponent({
     if (this.epubHashDebounceTimer !== null) {
       clearTimeout(this.epubHashDebounceTimer);
       this.epubHashDebounceTimer = null;
+    }
+    if (this.idleTimer !== null) {
+      clearTimeout(this.idleTimer);
+      this.idleTimer = null;
     }
     if (this.onWindowHashChangeHandler) {
       window.removeEventListener("hashchange", this.onWindowHashChangeHandler);
@@ -184,6 +205,15 @@ export default defineComponent({
           a: { color: "#6200ee !important" },
         });
       }
+    },
+    // Show the page buttons, then fade them out after a short idle
+    revealControls() {
+      this.controlsVisible = true;
+      if (this.idleTimer !== null) clearTimeout(this.idleTimer);
+      this.idleTimer = window.setTimeout(() => {
+        this.controlsVisible = false;
+        this.idleTimer = null;
+      }, 2000);
     },
     // Navigate to the next page
     nextPage() {
@@ -250,6 +280,12 @@ export default defineComponent({
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   align-items: center;
+  transition: opacity 0.3s ease;
+}
+
+.navigation.nav-hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .nav-button {
