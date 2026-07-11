@@ -46,24 +46,15 @@
         </div>
       </div>
       <hr v-if="showDivider" class="divider">
-      <action
-        v-if="showCreateFileActions"
-        icon="create_new_folder"
-        :label="$t('files.newFolder')"
-        @action="showNewDirPrompt"
-      />
-      <action
-        v-if="showCreateFileActions"
-        icon="note_add"
-        :label="$t('files.newFile')"
-        @action="showPrompt('newFile')"
-      />
-      <action
-        v-if="showCreateFileActions"
-        icon="file_upload"
-        :label="$t('general.upload')"
-        @action="showUploadPrompt"
-      />
+      <template v-if="showCreateFileActions">
+        <action
+          v-for="item in createActions"
+          :key="item.key"
+          :icon="item.icon"
+          :label="item.label"
+          @action="item.action"
+        />
+      </template>
       <action
         v-if="showArchive"
         icon="archive"
@@ -207,6 +198,7 @@ import Action from "@/components/Action.vue";
 import { notify } from "@/notify";
 import { getters, mutations, state } from "@/store";
 import { url } from "@/utils";
+import { buildCreateActions, canShowSelectMultiple, toggleMultipleSelection } from "@/utils/fileActions";
 import buttons from "@/utils/buttons";
 import { copyToClipboard } from "@/utils/clipboard";
 import { globalVars } from "@/utils/constants.js";
@@ -292,6 +284,9 @@ export default {
         return !!getters.permissions().create;
       }
       return getters.isAdmin() || !!state.user?.permissions?.create;
+    },
+    createActions() {
+      return buildCreateActions(this.$t, { item: this.firstSelected });
     },
     /** New folder / new file / upload — requires permissions.create only (not admin alone). */
     showCreateFileActions() {
@@ -402,16 +397,7 @@ export default {
     },
     showSelectMultiple() {
       if (this.showLimitedOptions) return false;
-      if (this.isMultiple || this.isSearchActive) {
-        return false;
-      }
-      if (state.user?.showSelectMultiple) {
-        return true;
-      }
-      if (getters.isMobile()) {
-        return true;
-      }
-      return false
+      return canShowSelectMultiple();
     },
     hasOverflowItems() {
       return this.showEdit || this.showDelete || this.showSave || this.showGoToRaw || this.hasDownload || this.showUnarchiveInOverflow;
@@ -660,9 +646,6 @@ export default {
       }
       this.showCreate = true;
     },
-    showPrompt(value) {
-      return mutations.showPrompt(value);
-    },
     showSharePrompt() {
       mutations.closeHovers();
       mutations.showPrompt({
@@ -707,10 +690,7 @@ export default {
       // Right-click / prompt: start in normal mode; user opens create via + or sidebar (createOnly).
       this.showCreate = false;
     },
-    toggleMultipleSelection() {
-      mutations.setMultiple(true);
-      mutations.closeHovers();
-    },
+    toggleMultipleSelection,
     startDownload() {
       mutations.closeTopPrompt();
       const items = this.providedItems;
@@ -800,25 +780,6 @@ export default {
 
       await copyToClipboard(path);
       mutations.closeHovers();
-    },
-    showNewDirPrompt() {
-      mutations.closeHovers();
-      // If the context menu was triggered on a directory, pass its path as base
-      const selectedItem = this.firstSelected;
-      let base = null;
-      if (selectedItem?.isDir) {
-        // Pass both path and source
-        base = {
-          path: selectedItem.path,
-          source: selectedItem.source,
-        };
-      }
-      mutations.showPrompt({
-        name: "newDir",
-        props: {
-          base: base,
-        },
-      });
     },
     showArchivePrompt() {
       mutations.closeTopPrompt();
@@ -910,23 +871,6 @@ export default {
       }
       mutations.closeHovers();
     },
-    showUploadPrompt() {
-      mutations.closeHovers();
-      let targetPath = state.req.path;
-      let targetSource = state.req.source;
-      const selectedItem = this.firstSelected;
-      if (selectedItem?.isDir) {
-        targetPath = selectedItem.path;
-        targetSource = selectedItem.source;
-      }
-      mutations.showPrompt({
-        name: "upload",
-        props: {
-          targetPath: targetPath,
-          targetSource: targetSource,
-        },
-      });
-    },
     openParentFolder() {
       const item = this.firstSelected;
       const parentPath = url.removeLastDir(item.path) || "/";
@@ -957,7 +901,8 @@ export default {
 }
 
 #context-menu.centered {
-  top: 50% !important;
+  /* center within the physical screen, not the iOS-shifted viewport */
+  top: calc(50% + var(--safe-area-top) / 2) !important;
   left: 50% !important;
   -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);

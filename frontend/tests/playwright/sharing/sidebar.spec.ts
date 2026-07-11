@@ -10,7 +10,7 @@ test("create a new share", async ({ page }) => {
     await page.locator('a[aria-label="text-files"]').click({ button: "right" });
     await page.locator('.selected-count-header').waitFor({ state: 'visible' });
     await expect(page.locator('.selected-count-header')).toHaveText('1');
-    await page.locator('button[aria-label="Share"]').click();
+    await page.locator('#context-menu button[aria-label="Share"]').click();
     await expect(page.locator('div[aria-label="share-path"]')).toHaveText('Path: /text-files/');
     await page.locator('button[aria-label="Share-Confirm"]').click();
     await expect(page.locator("div[aria-label='share-prompt'] .card-content table tbody tr:not(:has(th))")).toHaveCount(1);
@@ -25,7 +25,7 @@ test("check previously created share has correct sidebar links", async ({ page, 
     await page.locator('a[aria-label="text-files"]').click({ button: "right" });
     await page.locator('.selected-count-header').waitFor({ state: 'visible' });
     await expect(page.locator('.selected-count-header')).toHaveText('1');
-    await page.locator('button[aria-label="Share"]').click();
+    await page.locator('#context-menu button[aria-label="Share"]').click();
     // create a new share
     const shareHash = await page.locator("div[aria-label='share-prompt'] .card-content table tbody tr:not(:has(th)) td").first().textContent();
     if (!shareHash) {
@@ -53,7 +53,7 @@ test("edit previously created links and ensure they are updated", async ({ page,
     await page.locator('a[aria-label="text-files"]').click({ button: "right" });
     await page.locator('.selected-count-header').waitFor({ state: 'visible' });
     await expect(page.locator('.selected-count-header')).toHaveText('1');
-    await page.locator('button[aria-label="Share"]').click();
+    await page.locator('#context-menu button[aria-label="Share"]').click();
     await expect(page.locator('div[aria-label="share-path"]')).toHaveText('Path: /text-files/');
     // edit the link
     await page.locator('button[aria-label="Edit"]').click();

@@ -88,8 +88,8 @@ test("2x copy from listing to new folder", async({ page, checkForErrors }) => {
   // create new directory
   // Ensure .listing-items is visible
   await page.locator('.listing-items').click({ button: "right" });
-  await page.locator('button[aria-label="New folder"]').waitFor({ state: 'visible' });
-  await page.locator('button[aria-label="New folder"]').click();
+  await page.locator('#context-menu button[aria-label="New folder"]').waitFor({ state: 'visible' });
+  await page.locator('#context-menu button[aria-label="New folder"]').click();
   await page.locator('input[aria-label="New Folder Name"]').waitFor({ state: 'visible' });
   await page.locator('input[aria-label="New Folder Name"]').fill('newfolder');
   await page.locator('button[aria-label="Create"]').click();

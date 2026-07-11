@@ -1,6 +1,6 @@
 import type { Browser, Page } from "@playwright/test";
 import { expect, firefox } from "@playwright/test";
-import { createShareAndGetHash, openContextMenuHelper } from "./test-setup";
+import { createShareAndGetHash, waitForFileActionsReady } from "./test-setup";
 
 // Perform authentication and store auth state
 async function globalSetup() {
@@ -17,8 +17,8 @@ async function globalSetup() {
   await expect(page).toHaveTitle("Graham's Filebrowser - Files - demo-127.0.0.1");
 
   const shareHash = await createShareAndGetHash(page, "Path: /", async () => {
-    await openContextMenuHelper(page);
-    await page.locator('button[aria-label="Share"]').click();
+    await waitForFileActionsReady(page);
+    await page.locator('[data-testid="sidebar-file-action-share"]').click();
   });
   await page.evaluate((hash) => {
     localStorage.setItem("shareHash", hash);

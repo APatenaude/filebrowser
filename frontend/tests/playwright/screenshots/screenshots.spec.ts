@@ -45,12 +45,12 @@ test("context menu", async ({ page, theme }) => {
   }
   await page.screenshot({ path: `./generated/listing/right-click-${theme}.jpg`, quality: jpgQuality });
   // assert options exist and don't exist
-  await expect(page.locator('button[aria-label="New folder"]')).toBeHidden();
-  await expect(page.locator('button[aria-label="New file"]')).toBeHidden();
-  await expect(page.locator('button[aria-label="Upload"]')).toBeHidden();
+  await expect(page.locator('#context-menu button[aria-label="New folder"]')).toBeHidden();
+  await expect(page.locator('#context-menu button[aria-label="New file"]')).toBeHidden();
+  await expect(page.locator('#context-menu button[aria-label="Upload"]')).toBeHidden();
   await expect(page.locator('button[aria-label="Info"]')).toBeVisible();
   await expect(page.locator('button[aria-label="Download"]')).toBeVisible();
-  await expect(page.locator('button[aria-label="Share"]')).toBeVisible();
+  await expect(page.locator('#context-menu button[aria-label="Share"]')).toBeVisible();
   await expect(page.locator('button[aria-label="Delete"]')).toBeVisible();
   await expect(page.locator('button[aria-label="Rename"]')).toBeVisible();
   await expect(page.locator('button[aria-label="Move file"]')).toBeVisible();

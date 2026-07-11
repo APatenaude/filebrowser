@@ -22,6 +22,7 @@
   <Notifications />
   <Toast :toasts="toasts" />
   <StatusBar :class="{ moveWithSidebar: moveWithSidebar.shouldMove }" />
+  <FileActionsFab />
   <ContextMenu v-bind="contextMenuProps"></ContextMenu>
   <Tooltip />
   <NextPrevious />
@@ -36,6 +37,7 @@ import ContextMenu from "@/components/ContextMenu.vue";
 import Notifications from "@/components/Notifications.vue";
 import Toast from "@/components/Toast.vue";
 import StatusBar from "@/components/StatusBar.vue";
+import FileActionsFab from "@/components/files/FileActionsFab.vue";
 import Scrollbar from "@/components/files/Scrollbar.vue";
 import Tooltip from "@/components/Tooltip.vue";
 import NextPrevious from "@/components/files/nextPrevious.vue";
@@ -55,6 +57,7 @@ export default {
     Notifications,
     Toast,
     StatusBar,
+    FileActionsFab,
     defaultBar,
     Sidebar,
     Prompts,

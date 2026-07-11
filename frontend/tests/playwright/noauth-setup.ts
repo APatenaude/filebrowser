@@ -18,7 +18,7 @@ async function globalSetup() {
     await page.locator('a[aria-label="myfolder"]').click({ button: "right" });
     await page.locator(".selected-count-header").waitFor({ state: "visible" });
     await expect(page.locator(".selected-count-header")).toHaveText("1");
-    await page.locator('button[aria-label="Share"]').click();
+    await page.locator('#context-menu button[aria-label="Share"]').click();
   });
   await page.evaluate((hash) => {
     localStorage.setItem("shareHash", hash);
@@ -31,7 +31,7 @@ async function globalSetup() {
     await page.locator('a[aria-label="1file1.txt"]').click({ button: "right" });
     await page.locator(".selected-count-header").waitFor({ state: "visible" });
     await expect(page.locator(".selected-count-header")).toHaveText("1");
-    await page.locator('button[aria-label="Share"]').click();
+    await page.locator('#context-menu button[aria-label="Share"]').click();
   });
   await page.evaluate((hash) => {
     localStorage.setItem("shareHashFile", hash);

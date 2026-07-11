@@ -12,6 +12,7 @@
       <a href="#" @click.prevent="installPwa">{{ $t("pwa.install") }}</a>
       <i @click="dismissPwaInstall" aria-label="close-banner" class="material-symbols">close</i>
     </div>
+    <QuickToggles v-if="!isSettings" />
     <SidebarSettings v-if="isSettings"></SidebarSettings>
     <SidebarGeneral v-if="!isSettings"></SidebarGeneral>
     <div class="buffer"></div>
@@ -45,12 +46,14 @@ import { getters, mutations, state } from "@/store"; // Import your custom store
 import { installAvailable, promptInstall } from "@/utils/pwaInstall";
 import SidebarGeneral from "./General.vue";
 import SidebarSettings from "./Settings.vue";
+import QuickToggles from "@/components/QuickToggles.vue";
 
 export default {
   name: "sidebar",
   components: {
     SidebarGeneral,
     SidebarSettings,
+    QuickToggles,
   },
   data() {
     return {
@@ -58,6 +61,9 @@ export default {
       resizeStartWidth: 0,
       previousSidebarSize: null, // Remember the previous width when switching from desktop to mobile.
       pwaInstallDismissed: sessionStorage.getItem("pwaInstallDismissed") === "true",
+      edgeSwipeStartX: null,
+      edgeSwipeStartY: null,
+      edgeSwipeClosing: false,
     };
   },
   mounted() {
@@ -84,6 +90,10 @@ export default {
     document.addEventListener('touchmove', this.handleResize, { passive: true });
     document.addEventListener('mouseup', this.stopResize);
     document.addEventListener('touchend', this.stopResize);
+    document.addEventListener('touchstart', this.handleEdgeSwipeStart, { passive: true });
+    document.addEventListener('touchmove', this.handleEdgeSwipeMove, { passive: true });
+    document.addEventListener('touchend', this.stopEdgeSwipe);
+    document.addEventListener('touchcancel', this.stopEdgeSwipe);
   },
   beforeUnmount() {
     // Clean up event listener
@@ -94,6 +104,10 @@ export default {
     document.removeEventListener('touchmove', this.handleResize);
     document.removeEventListener('mouseup', this.stopResize);
     document.removeEventListener('touchend', this.stopResize);
+    document.removeEventListener('touchstart', this.handleEdgeSwipeStart);
+    document.removeEventListener('touchmove', this.handleEdgeSwipeMove);
+    document.removeEventListener('touchend', this.stopEdgeSwipe);
+    document.removeEventListener('touchcancel', this.stopEdgeSwipe);
   },
   watch: {
     isMobile(newIsMobile, oldIsMobile) {
@@ -170,6 +184,56 @@ export default {
       mutations.setSidebarResizing(false);
       document.body.classList.remove('sidebar-resizing');
     },
+    handleEdgeSwipeStart(event) {
+      // swipe right from the left third opens the sidebar, swipe left closes it; ignore multi-touch
+      if (event.touches.length > 1) return;
+      const touch = event.touches?.[0];
+      if (!touch || state.sidebar.isResizing) return;
+      if (getters.currentPromptName() !== "" || state.isSearchActive) return;
+      const cv = getters.currentView();
+      if (cv !== "listingView" && cv !== "tools") return;
+      if (getters.isSidebarVisible()) {
+        if (getters.isStickySidebar()) return;
+        this.edgeSwipeClosing = true;
+      } else {
+        // leave the ~20px bezel to the OS back gesture
+        if (touch.clientX < 20 || touch.clientX > window.innerWidth / 3) return;
+        this.edgeSwipeClosing = false;
+      }
+      this.edgeSwipeStartX = touch.clientX;
+      this.edgeSwipeStartY = touch.clientY;
+    },
+    handleEdgeSwipeMove(event) {
+      if (this.edgeSwipeStartX === null) return;
+      if (event.touches.length > 1) {
+        this.stopEdgeSwipe();
+        return;
+      }
+      const touch = event.touches?.[0];
+      if (!touch) return;
+      const deltaX = touch.clientX - this.edgeSwipeStartX;
+      const deltaY = touch.clientY - this.edgeSwipeStartY;
+      // vertical movement is scrolling, not a swipe
+      if (Math.abs(deltaY) > 40 && Math.abs(deltaY) > Math.abs(deltaX)) {
+        this.stopEdgeSwipe();
+        return;
+      }
+      // only trigger on a predominantly horizontal gesture
+      if (Math.abs(deltaX) > Math.abs(deltaY) && (this.edgeSwipeClosing ? deltaX < -60 : deltaX > 60)) {
+        const closing = this.edgeSwipeClosing;
+        this.stopEdgeSwipe();
+        if (closing) {
+          mutations.closeSidebar();
+        } else {
+          mutations.toggleSidebar();
+        }
+      }
+    },
+    stopEdgeSwipe() {
+      this.edgeSwipeStartX = null;
+      this.edgeSwipeStartY = null;
+      this.edgeSwipeClosing = false;
+    },
     // Show the help overlay
     help() {
       mutations.showPrompt("help");
@@ -193,14 +257,15 @@ export default {
   display: flex;
   flex-direction: column;
   padding: 1em;
+  padding-left: calc(1em + var(--safe-area-left));
   width: 20em;
   position: fixed;
   z-index: 4;
   transform: translateZ(0);
   height: 100%;
   transition: 0.4s ease;
-  top: 4em;
-  padding-bottom: 4em;
+  top: calc(4em + var(--safe-area-top));
+  padding-bottom: calc(4em + var(--safe-area-top));
   background-color: rgb(37 49 55 / 5%) !important;
   will-change: left;
   backface-visibility: hidden;
@@ -246,6 +311,20 @@ body.rtl nav {
   text-overflow: ellipsis;
 }
 
+#sidebar.scrollable {
+  overflow: auto;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+#sidebar.scrollable::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, and Opera */
+}
+
+.quick-toggles {
+  padding-bottom: 1em;
+}
+
 body.rtl .action {
   direction: rtl;
   text-align: right;
@@ -283,16 +362,6 @@ body.rtl .action {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1em;
-}
-
-#sidebar.scrollable {
-  overflow: auto;
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
-}
-
-#sidebar.scrollable::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, and Opera */
 }
 
 .sidebar-resizer {

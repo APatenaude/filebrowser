@@ -52,7 +52,7 @@ test("share private source", async ({ page, checkForErrors }) => {
 });
 
 
-test("share file creation actions", async ({ page, checkForErrors, openContextMenu }) => {
+test("share file creation actions", async ({ page, checkForErrors, waitForFileActions }) => {
   await page.goto("/files/");
   await expect(page).toHaveTitle("Graham's Filebrowser - Files - playwright-files");
   const rootShareHash = await page.evaluate(() => localStorage.getItem('rootShareHash'));
@@ -62,8 +62,8 @@ test("share file creation actions", async ({ page, checkForErrors, openContextMe
   await page.goto(`public/share/${rootShareHash}`);
   await expect(page).toHaveTitle("Graham's Filebrowser - Share - playwright-files");
   await page.waitForTimeout(1000);
-  await openContextMenu();
-  await page.locator('button[aria-label="New file"]').click();
+  await waitForFileActions();
+  await page.locator('[data-testid="sidebar-file-action-new-file"]').click();
   await page.locator('input[aria-label="FileName Field"]').waitFor({ state: 'visible' });
   await page.locator('input[aria-label="FileName Field"]').fill('dfsaf.txt');
   await page.locator('button[aria-label="Create"]').click();

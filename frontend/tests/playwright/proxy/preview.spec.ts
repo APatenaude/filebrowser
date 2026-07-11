@@ -16,7 +16,7 @@ test("Create first new file with basic auth", async ({ page, checkForErrors }, t
     await expect(await page.locator('.listing-items .file-items')).toHaveCount(testInfo.retry);
   }
   await page.locator('.listing-items').click({ button: "right" });
-  await page.locator('button[aria-label="New file"]').click();
+  await page.locator('#context-menu button[aria-label="New file"]').click();
   await page.locator('input[aria-label="FileName Field"]').fill(fileName);
   await page.locator('button[aria-label="Create"]').click();
   // Wait for notification and click "Go to item" button
